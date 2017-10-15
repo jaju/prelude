@@ -1,11 +1,11 @@
 ;; Copyright (C) 2015 Ravindra R. Jaju
 
-;; Author: Ravindra Jaju
-;; URL: http://blog.msync.in/
+;; Author: Ravindra Jaju - https:/msync.org/
 
 ;;; Code:
 
 (require 'org)
+(require 'ox-hugo)
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
@@ -30,6 +30,11 @@
 (require 'ob-clojure)
 (require 'cider)
 (setq org-babel-clojure-backend 'cider)
+
+;; And Python
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)))
 
 ;; More from http://fgiasson.com/blog/index.php/2016/04/05/using-clojure-in-org-mode-and-implementing-asynchronous-processing/
 (org-defkey org-mode-map "\C-x\C-e" 'cider-eval-last-sexp)
@@ -83,17 +88,17 @@
 
 (setq org-publish-project-alist
       '(
-        ("org-blog.msync.in"
+        ("org-blog.msync.org"
          :base-directory "~/.org/blog"
          :base-extension "org"
-         :publishing-directory "~/Projects/blog/jekyll"
+         :publishing-directory "~/Projects/hugo-blog/content"
          :recursive t
-         :publishing-function org-html-publish-to-html
+         :publishing-function org-hugo-export-to-md
          :headline-levels 4
          :html-extension "html"
          :body-only t)
 
-        ("org-static-blog.msync.in"
+        ("org-static-blog.msync.org"
          :base-directory "~/.org/blog"
          :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
          :publishing-directory "~/Projects/blog"
@@ -101,11 +106,11 @@
          :publishing-function org-publish-attachment)
 
         ("msync"
-         :components ("org-blog.msync.in" "org-static-blog.msync.in"))
+         :components ("org-blog.msync.org" "org-static-blog.msync.org"))
 
         ("msync-presentation"
          :base-directory "~/.org/presentations"
-         :publishing-directory "~/Projects/blog/jekyll/_presentation"
+         :publishing-directory "~/Projects/hugo-blog/content/presentation"
          :recursive t
          :base-extension "org"
          :html-extension "html"
@@ -113,18 +118,15 @@
          :publishing-function org-reveal-export-to-html)))
 
 (define-skeleton org-blog-skeleton
-  "Inserts the right directives for jekyll-orgmode blogging"
+  "Inserts the right directives for hugo-orgmode blogging"
   "Title: "
   "#+OPTIONS: toc:nil num:nil\n"
-  "#+BEGIN_HTML\n"
-  "---\n"
-  "layout: post\n"
-  "title: " str "\n"
+  "#+TITLE: " str "\n"
   "author: Ravindra R. Jaju\n"
-  "excerpt: \n"
-  "created_at: \n"
-  "categories: \n"
-  "permalink: /blog/:year/:month/:day/:title.html\n"
+  "abstract:\n"
+  "date: " (now) "\n"
+  "lastmod:\n"
+  "tags: []\n"
   "published: false\n"
   "---\n"
   "#+END_HTML\n\n"
@@ -135,7 +137,13 @@
 
 (custom-set-variables
  '(org-display-custom-times t)
- '(org-time-stamp-custom-formats (quote ("<%a, %Y-%m-%d>" . "<%Y-%m-%d %H:%M:%S>"))))
+ '(org-time-stamp-custom-formats "%Y-%m-%dT%T%:z"))
+
+(defun now ()
+  (interactive)
+  (insert (format-time-string "%Y-%m-%dT%T%:z")))
+(global-set-key (kbd "C-c C-t .") 'now)
+
 
 ;(eval-after-load 'ox ;; shouldn't be byte compiled.
 ;		 '(when (and user-init-file (buffer-file-name)) ;; don't do it in async
